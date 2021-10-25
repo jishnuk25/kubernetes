@@ -1,0 +1,55 @@
+scheduling-node selection-
+filtering(finds the nodes where it is feasible to schedule the pod)-->scoring(scheduler assigns each node a score which cleared filtering
+--> binding(binds the pods to the suitable nodes)
+
+Assigning pods to nodes using node selectors
+    kubectl label node <node name> <label=label_name>
+    example:
+    kubectl label node1 hardware=local_gpu
+
+    on the pod spec-
+        spec:
+            containers:
+            nodeSelector:
+                hardware: local_gpu
+
+Affinity and Anti-Affinity
+    nodeAffinity: uses labels on nods to make scheduling decisions with matchExpressions, nodeSelector can use only matchLabels
+        requiredDuringSchedulingIgnoredDuringExecution: pod goes to pending if the requirements don't match
+        preferredDuringSchedulingIgnoredDuringExecution: pod still will get scheduled even when requirement are not met
+    podAffinity: schedules pods onto the same Node, Zone as some other pod
+    podAntiAffinity: schedules pods onto the different Node, Zone as some other pod
+
+
+Taints and Tolerations:
+    Taints: ability to control which pods are scheduled to nodes
+    Tolerations: allows a pod to ignore a taint and be scheduled as normal on Tainted nodes
+        key=value:effect
+        example:
+        kubectl taint nodes node1 key=MyTaint:NoSchedule  -- not schedule a pod on this node unless there's a toleration defined on the pod
+        to untain
+        kubectl taint nodes node1 key=MyTaint:NoSchedule-
+        pod spec-
+            spec:
+                containers:
+                tolerations:   # this pod will not get affetcted by the taint rules on the node
+                - key: "key"
+                  operator: "Equal"
+                  value: "MyTaint"
+                  effect: "NoSchedule"
+
+    Node cordoning:
+        marks a node as unschedulable
+        prevents new pods from being scheduled to that node
+        doesn't affect existing pods
+        Useful for node reboot or maintenance
+
+            kubectl cordon <node name>
+
+        to schedule the existing workload from a node
+
+            kubectl drain <node name> --ignore-daemonsets
+        
+        to remove cordon
+
+            kubectl uncordon <node name>

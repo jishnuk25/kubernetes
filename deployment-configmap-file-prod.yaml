@@ -1,0 +1,27 @@
+# kubectl create configmap appconfigprod --from-file=appconfig
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-world-configmap-file-prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-world-configmap-file-prod
+  template:
+    metadata:
+      labels:
+        app: hello-world-configmap-file-prod
+    spec:
+      volumes:
+      - name: appconfig
+        configMap:
+          name: appconfigprod
+      containers:
+      - name: hello-world
+        image: gcr.io/google-samples/hello-app:1.0
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+          - name: appconfig
+            mountPath: "/etc/appconfig"

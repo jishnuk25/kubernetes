@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hello-world-job-parallel
+spec:
+  completions: 50
+  # 50 pods to be run untill completion
+  parallelism: 10
+  # maximum 10 pods can run in parallel
+  #(10 pods ill run in paralll up until 50 completions)
+  template:
+    spec:
+      containers:
+      - name: ubuntu
+        image: ubuntu
+        command:
+          - "/bin/bash"
+          - "-c"
+          - "/bin/echo Hello from pod $(hostname) at $(date)"
+      restartPolicy: Never

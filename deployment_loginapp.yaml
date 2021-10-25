@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: loginwebapp
+spec: 
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loginwebapp
+  template:
+    metadata:
+      labels:
+        app: loginwebapp
+    spec:
+      containers:
+      - name: loginwebapp
+        image: 25795/login-webapp:1.0
+        ports:
+        - containerPort: 80
+      - name: postgres
+        image: 25795/postgres_login-webapp:1.0
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_PASSWORD
+          value: "Admin@777"
+        - name: POSTGRES_DB
+          value: "mydb"
+        - name: PGPORT
+          value: "5432"
+        - name: POSTGRES_USER
+          value: "Admin"

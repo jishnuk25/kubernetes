@@ -1,0 +1,102 @@
+Ingress:
+    ingress object: where we define the rules for external access to services
+    ingress controller: implements api object's rules
+        types of ingress controllers
+            pods in a cluster-nginx
+            hardware external to the cluster-citrix and f5
+            cloud controllers-APPGW, google load balancer, aws ALB Ingress
+    * load balancing to endpoints, name based virtual hosts, path based routing, tls/ssl termination
+
+ingress vs loadbalancers:
+    * functions at layer 7 - path based routing, name based virtual hosts
+    * higher levele capabilities - URL rewriting, session persistency and dynamic waiting
+    * single resource - can provide access to multipl internal services. loadbalancers expose on a single service on single ip and port.
+    * Reduced latency
+
+exposing a single service with ingress
+
+    apiVersion: networking.k8s.io/v1beta1
+    kind: Ingress
+    metadata:
+      name: ingress-single
+    spec:
+      backend:
+        serviceName: hello-world-service-single
+        servicePort: 80
+
+expoing mutliple services with ingress(path based routing)
+
+    apiVersion: networking.k8s.io/v1beta1
+    kind: Ingress
+    metadata:
+      name: ingress-multiple
+    spec:
+      rules:
+        - host: path.example.com
+          http:
+            paths:
+            - path: /red
+                backend:
+                serviceName: hello-world-service-red
+                servicePort: 4242
+            - path: /blue
+                backend:
+                serviceName: hello-world-service-blue
+                servicePort: 4343
+      backend:
+        serviceName: hello-world-service-errorPage
+        port: 80
+      # if backend is not defined, requests comes without red or blue path will be directly thrown a 404. now it can be navigated to an error page
+
+
+Name based virtual hosts with ingress
+
+    spec:
+      rules:
+        - host: red.example.com
+          http:
+            paths:
+            - backend:
+                serviceName: hello-world-service-red
+                servicePort: 4242
+        - host: blue.example.com
+          http:
+            paths:
+            - backend:
+                serviceName: hello-world-service-blue
+                servicePort: 4343
+      backend:
+        serviceName: hello-world-service-errorPage
+        port: 80
+
+    curl http://$INGRESSIP/ --header 'Host: blue.example.com' -- will take it to the blue service, and so and so. and no header to the deault backend
+
+Using TLS certificates ith Ingress
+
+ 1. generate a certificate:
+     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+        -keyout tls.key -out tls.crt -subj "/C=US/ST=ILLINOIIS/L=CHICAGO/O=IT/OU=IT/CN=tls.example.com"
+
+ 2. kubectl create secret tls tls-secret --key tls.key --cert tls.crt
+
+ 3. ingress-tls.yaml
+
+    apiVersion: networking.k8s.io/v1beta1
+    kind: Ingress
+    metadata:
+      name: ingress-tls
+    spec:
+      tls:
+      - hosts: 
+        - tls.example.com
+        secretName: tls-secret # contains the secret keys and tls certificate path
+          http:
+            paths:
+            - backend:
+                serviceName: hello-world-service-single
+                servicePort: 80
+
+ * test access to hostname... we need --resolve because we haven't registered the DNS name
+    TLS is a layer lower than host headers, so we have to speciy the correct DNS name.
+
+    curl httpls://tls.example.com:443 --resolve tls.example.com:443:$INGRESSIP --insecure --verbose

@@ -1,0 +1,2 @@
+DATABASE_SERVER=sql.example.com
+BACKEND_SERVER=be.example.com

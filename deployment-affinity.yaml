@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-world-web
+spec:
+  selector:
+    matchLabels:
+      app: hello-world-web
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: hello-world-web
+    spec:
+      containers:
+      - name: hello-world-web
+        image: gcr.io/google-samples/hello-app:1.0
+        ports:
+        - containerPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-world-cache
+spec:
+  selector:
+    matchLabels:
+      app: hello-world-cache
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: hello-world-cache
+    spec:
+      containers:
+      - name: hello-world-cache
+        image: gcr.io/google-samples/hello-app:1.0
+        ports:
+        - containerPort: 8080
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - hello-world-web
+            topologyKey: "kubernetes.io/hostname" 
+            # cache pod will be co-scheduled with web pod always, if web pod is scaled to another node, the cache pod get scaled will join the web pod in the same node

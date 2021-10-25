@@ -1,0 +1,26 @@
+# kubectl create configmap appconfigmapqa \
+#     --from-literal=DATABASE_SERVER=qa.sql.example.com \
+#     --from-literal=BACKEND_SERVER=qa.be.example.com
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-world-configmap-env-qa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-world-configmap-env-qa
+  template:
+    metadata:
+      labels:
+        app: hello-world-configmap-env-qa
+    spec:
+      containers:
+      - name: hello-world
+        image: gcr.io/google-samples/hello-app:1.0
+        envFrom:
+          - configMapRef:
+              name: appconfigqa
+        ports:
+        - containerPort: 8080

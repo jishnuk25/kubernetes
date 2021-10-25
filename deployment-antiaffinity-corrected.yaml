@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-world-web
+spec:
+  selector:
+    matchLabels:
+      app: hello-world-web
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: hello-world-web
+    spec:
+      containers:
+      - name: hello-world-web
+        image: gcr.io/google-samples/hello-app:1.0
+        ports:
+        - containerPort: 8080
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - hello-world-web
+              topologyKey: "kubernetes.io/hostname"
+            # antiaffinity declaration makes only one pod run in a node, changed it to preferred so it can run more than one pod in a node
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-world-cache
+spec:
+  selector:
+    matchLabels:
+      app: hello-world-cache
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: hello-world-cache
+    spec:
+      containers:
+      - name: hello-world-cache
+        image: gcr.io/google-samples/hello-app:1.0
+        ports:
+        - containerPort: 8080
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - hello-world-web
+            topologyKey: "kubernetes.io/hostname" 
+            # cache pod will be co-scheduled with web pod always, if web pod is scaled to another node, the cache pod when scaled will join the web pod in the new node
